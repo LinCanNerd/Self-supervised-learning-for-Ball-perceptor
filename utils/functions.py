@@ -6,6 +6,7 @@ import pandas as pd
 from sklearn.decomposition import PCA
 from sklearn.preprocessing import StandardScaler
 import random
+import os
 
 def get_random_patch(image, patch_size=32):
 
@@ -194,11 +195,8 @@ def apply_pca_to_dataframe(df, n_components=2):
     return pca_df[reordered_columns]
 
 
-def display_colorization_prediction(model, colorization_dataset):
+def display_colorization_prediction(model, colorization_dataset, index):
 
-
-    # Randomly select an index to retrieve an image from the dataset
-    index = random.randint(0, len(colorization_dataset))  
     # Load a random grayscale and color image pair from the dataset
     sample = colorization_dataset[index]
     grayscale_image = sample['gray']
@@ -236,3 +234,64 @@ def display_colorization_prediction(model, colorization_dataset):
     axs[2].axis('off') 
 
     plt.show() 
+
+
+def draw_bounding_circles(image_dir, annotation_dir, output_dir):
+    os.makedirs(output_dir, exist_ok=True)
+
+    for image_file in os.listdir(image_dir):
+        if image_file.endswith('.png'):
+            image_path = os.path.join(image_dir, image_file)
+            annotation_file = image_file.replace('.png', '.csv')
+            annotation_path = os.path.join(annotation_dir, annotation_file)
+
+            if not os.path.exists(annotation_path):
+                print(f"Annotation for {image_file} not found.")
+                continue
+
+            # Read image
+            image = cv2.imread(image_path)
+
+            # Read annotations
+            annotations = pd.read_csv(annotation_path)
+
+            for _, row in annotations.iterrows():
+                if row['label'] == 1:
+                    cx, cy, radius = int(row['c-x']), int(row['c-y']), int(row['radius'])
+                    cv2.circle(image, (cx, cy), radius, (0, 255, 0), 2)
+                    cv2.putText(image, 'Apple', (cx - radius, cy - radius - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 1)
+
+            # Save the image with bounding circles
+            output_path = os.path.join(output_dir, image_file)
+            cv2.imwrite(output_path, image)
+
+
+def plot_random_apples(dataset, num_images=5):
+    # Get random indices from the dataset
+    random_indices = random.sample(range(len(dataset)), num_images)
+    
+    # Set up a figure with subplots
+    plt.figure(figsize=(15, 15))
+    
+    for i, idx in enumerate(random_indices):
+        # Get the image and annotations from the dataset
+        image, apples_labels, apples_annotations = dataset[idx]
+        
+        # Convert tensor to NumPy array (if necessary)
+        image = image.permute(1, 2, 0).numpy()  # Convert CHW to HWC format
+        image_copy = image.copy()
+        
+        # Check if there are apples (label == 1) in the annotations
+        for apple in apples_annotations:
+            # Draw a circle around the apple
+            center = (int(apple['x']), int(apple['y']))
+            radius = int(apple['r'])
+            cv2.circle(image_copy, center, radius, (0, 255, 0), 2)  # Green circle
+        
+        # Plot the image in the subplot
+        plt.subplot(1, num_images, i + 1)
+        plt.imshow(image_copy)
+        plt.axis('off')
+        plt.title(f"Image {idx} with {'Apples' if apples_labels[0] == 1 else 'No Apples'}")
+    
+    plt.show()

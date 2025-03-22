@@ -30,7 +30,14 @@ class ColorizationDataset(Dataset):
             - 'original': The original color image patch (C x H x W).
         """
         # Retrieve the original image patch at the specified index
-        original_patch = self.ballpatchdataset[idx]['patch']
+
+        data = self.ballpatchdataset[idx]
+
+        if isinstance(data, dict):
+            original_patch = data.get('patch', data[0])
+        else:
+            # If it's a tuple, just use the first element
+            original_patch = data[0]
 
         # Compute the grayscale version by taking the mean across color channels
         gray_patch = original_patch.mean(dim=0, keepdim=True)

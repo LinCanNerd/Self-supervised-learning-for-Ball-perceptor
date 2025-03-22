@@ -1,0 +1,17 @@
+# Ignore CSV files
+*.csv
+
+# Ignore image files
+*.png
+*.jpg
+*.jpeg
+
+# Ignore JSON files
+*.json
+
+*.pyc
+
+# Ignore virtual environments
+ProjVenv/
+acfr-multifruit-2016/
+

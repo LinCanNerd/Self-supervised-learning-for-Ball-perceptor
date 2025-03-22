@@ -1,6 +1,5 @@
 import torch.nn as nn
 import torch
-from sklearn.metrics import confusion_matrix
 import numpy as np
 
 

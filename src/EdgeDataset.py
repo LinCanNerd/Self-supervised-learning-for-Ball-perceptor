@@ -12,7 +12,14 @@ class Edgedataset(Dataset):
         return len(self.ballpatchdataset)
 
     def __getitem__(self, idx):
-        patch = self.ballpatchdataset[idx]['patch']
+        data = self.ballpatchdataset[idx]
+
+        if isinstance(data, dict):
+            patch = data.get('patch', data[0])
+        else:
+            # If it's a tuple, just use the first element
+            patch = data[0]
+            
         gray_patch = patch.mean(dim=0, keepdim=True)
         # Convert to numpy array for OpenCV processing (ensure it has the correct dtype)
         gray_patch_np = (gray_patch.squeeze().numpy() * 255).astype(np.uint8)  # Shape: [H, W]
